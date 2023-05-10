@@ -3,12 +3,17 @@
 	"tasks": [
 		{
 			"type": "cppbuild",
-			"label": "C/C++: g++ CodigoInicial",
+			"label": "C/C++: g++.exe (MPI)",
 			"command": "C:\\MinGW\\mingw64\\bin\\g++.exe",
 			"args": [
 				"-fdiagnostics-color=always",
 				"-g",
 				"${file}",
+				"-I",
+				"${MSMPI_INC}",
+				"-L",
+				"${MSMPI_LIB64}",
+				"-lmsmpi",
 				"-o",
 				"${fileDirname}\\${fileBasenameNoExtension}.exe"
 			],
@@ -16,7 +21,7 @@
 				"cwd": "${fileDirname}"
 			},
 			"problemMatcher": [
-				"$g++"
+				"$gcc"
 			],
 			"group": "build",
 			"detail": "compiler: C:\\MinGW\\mingw64\\bin\\g++.exe"
