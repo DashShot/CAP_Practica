@@ -273,17 +273,14 @@ int main(int argc, char* argv[])
 	enigma(rank,size);
 
 	t1= MPI_Wtime();
-
 	
-		
+	//Tiempos de cada proceso
 	printf("\nTiempos T0= %f",double(t0));
 	printf("\nTiempos T1= %f",double(t1));
 	
 	double elapsed = t1-t0;
 	if (rank == 0){
-	
-	    printf("\nTiempo = %f",elapsed);
-
+	    printf("\nTiempo = %f",elapsed);//Tiempo del maestro
 	}
 	//Finalizamos el entorno MPI
 	MPI_Finalize();
