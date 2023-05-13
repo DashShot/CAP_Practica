@@ -1,4 +1,5 @@
-package gic.cap;
+package cap.aitordavid.practica2;
+
 
 public class Main {
 

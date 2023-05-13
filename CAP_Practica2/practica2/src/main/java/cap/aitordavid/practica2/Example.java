@@ -1,4 +1,5 @@
-package gic.cap;
+package cap.aitordavid.practica2;
+
 
 import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
