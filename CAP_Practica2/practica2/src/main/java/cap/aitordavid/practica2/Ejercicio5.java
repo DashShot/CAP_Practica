@@ -177,7 +177,7 @@ public class Ejercicio5 {
     private void printCloudletsResults(DatacenterBroker broker) {
        // this.printCloudletList(broker.getCloudletReceivedList());
         Log.printLine("========== OUTPUT ==========");
-        for (Vm vm : broker.getVmList()) {
+       /*  for (Vm vm : broker.getVmList()) {
             Host host = vm.getHost();
             if (host != null) {
                 Log.printLine("Máquina virtual #" + vm.getId() + " creada en el host #" + host.getId());
@@ -185,5 +185,6 @@ public class Ejercicio5 {
                 Log.printLine("Máquina virtual #" + vm.getId() + " no pudo ser creada en ningún host");
             }
         }
+        */
     }
 }

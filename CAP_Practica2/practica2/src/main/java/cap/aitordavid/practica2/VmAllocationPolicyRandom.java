@@ -8,6 +8,8 @@ import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.VmAllocationPolicySimple;
 
+import java.util.Random;
+
 public class VmAllocationPolicyRandom extends VmAllocationPolicySimple {
     public VmAllocationPolicyRandom(List<? extends Host> list) {
         super(list);
@@ -24,16 +26,13 @@ public class VmAllocationPolicyRandom extends VmAllocationPolicySimple {
         }
         if (!getVmTable().containsKey(vm.getUid())) { // if this vm was not created
             do { // we still trying until we find a host or until we try all of them
-                int moreFree = Integer.MIN_VALUE;
-                int idx = -1;
-                // we want the host with less pes in use
-                for (int i = 0; i < freePesTmp.size(); i++) {
-                    if (freePesTmp.get(i) > moreFree) {
-                        moreFree = freePesTmp.get(i);
-                        idx = i;
-                    }
-                }
+                
+                // Queremos un Host aleatorio 
+                int idx = (int)(Math.random()*(getVmTable().size()));
+                
                 Host host = getHostList().get(idx);
+
+                Log.printLine("Intentamos Crear la VM: "+vm.getId()+"  Con el Host: "+ host.getId());
                 result = host.vmCreate(vm);
                 if (result) { // if vm was successfully created in the host
                     getVmTable().put(vm.getUid(), host);
@@ -44,13 +43,13 @@ public class VmAllocationPolicyRandom extends VmAllocationPolicySimple {
                     break;
                 } else {
                     freePesTmp.set(idx, Integer.MIN_VALUE);
+                    Log.printLine("No se pudo conseguir, intentando otro aleatorio...");
                 }
                 tries++;
             } while (!result && tries < getFreePes().size());
         }
-        if (!result) {
-            Log.printLine("Máquina virtual #" + vm.getId() + " no pudo ser creada en ningún host");
-        }
+        
+            
         return result;
     }
 }
