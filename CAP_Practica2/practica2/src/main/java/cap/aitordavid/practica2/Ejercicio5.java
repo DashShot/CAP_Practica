@@ -7,6 +7,7 @@ import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
 
+
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -69,6 +70,7 @@ public class Ejercicio5 {
                         + dft.format(cloudlet.getFinishTime()));
             }
         }
+        
     }
 
     private void createDataCenter(){
@@ -112,12 +114,10 @@ public class Ejercicio5 {
         Datacenter centroDeDatos = null;
         try {
             centroDeDatos = new Datacenter(nombre, caracteristicas,
-                    //Cambio de la politica por la nueva
                     new VmAllocationPolicyRandom(listaHosts),
                     new LinkedList<Storage>(), 0);
         } catch (Exception e) {
             e.printStackTrace();
-            //Log.printLine(">> ERROR creating datacenter");
         }
     }
 
@@ -132,10 +132,17 @@ public class Ejercicio5 {
     
         List<Vm> virtualMachines = new ArrayList<Vm>();
         for (int idx = 0; idx < 6; idx++) {
-            Vm vm = new Vm(idx, broker.getId(), 400, 1, 2048, 40960, 1000, "Xen",
-                new CloudletSchedulerSpaceShared());
-    
-            virtualMachines.add(vm);
+            virtualMachines.add(new Vm(
+                        virtualMachines.size(), // ID de la máquina virtual
+                        broker.getId(), // ID del broker
+                        400, // MIPS (millones de instrucciones por segundo)
+                        1, // Número de procesadores requeridos
+                        2048, // Cantidad de RAM en MB
+                        1000, // Cantidad de BW (ancho de banda) en Mbps
+                        40960, // Espacio de almacenamiento en MB (40 GB = 40960 MB)
+                        "Xen", // Tipo de hipervisor utilizado para virtualizar la máquina virtual
+                        new CloudletSchedulerSpaceShared() // Tipo de planificador de tareas
+                ));
         }
     
         broker.submitVmList(virtualMachines);
@@ -154,14 +161,7 @@ public class Ejercicio5 {
     
         broker.submitCloudletList(cloudlets);
     */
-        for (Vm vm : virtualMachines) {
-            Host host = vm.getHost();
-            if (host != null) {
-                Log.printLine("Máquina virtual #" + vm.getId() + " creada en el host #" + host.getId());
-            } else {
-                Log.printLine("Máquina virtual #" + vm.getId() + " no pudo ser creada en ningún host");
-            }
-        }
+        
     
         return broker;
     }
@@ -175,8 +175,15 @@ public class Ejercicio5 {
     }
 
     private void printCloudletsResults(DatacenterBroker broker) {
-        this.printCloudletList(broker.getCloudletReceivedList());
+       // this.printCloudletList(broker.getCloudletReceivedList());
+        Log.printLine("========== OUTPUT ==========");
+        for (Vm vm : broker.getVmList()) {
+            Host host = vm.getHost();
+            if (host != null) {
+                Log.printLine("Máquina virtual #" + vm.getId() + " creada en el host #" + host.getId());
+            } else {
+                Log.printLine("Máquina virtual #" + vm.getId() + " no pudo ser creada en ningún host");
+            }
+        }
     }
-
 }
-
