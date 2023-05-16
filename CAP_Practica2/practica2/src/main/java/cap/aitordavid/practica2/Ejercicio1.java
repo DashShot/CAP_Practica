@@ -14,9 +14,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 
-public class Example {
+public class Ejercicio1 {
 
-    public Example(){}
+    public Ejercicio1(){}
 
     public void run(){
 
