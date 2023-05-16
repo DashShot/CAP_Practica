@@ -7,6 +7,7 @@ import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
 
+
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -72,43 +73,51 @@ public class Ejercicio4 {
     }
 
     private void createDataCenter(){
-        List<Pe> processorElements = new ArrayList<Pe>();
-        processorElements.add(new Pe(0, new PeProvisionerSimple(2000)));
-        processorElements.add(new Pe(1, new PeProvisionerSimple(2000)));
+        final int NUMERO_HOSTS = 3; // Queremos 3 hosts
+        int mips = 1200;
+        int ram = 16384; // 16 GB
+        long almacenamiento = 1000000; // 1 TB
+        long anchoBanda = 10000; // 10 Gbps
+        List<Pe>[] listaCPUs = new List[NUMERO_HOSTS];
+        Host[] host = new Host[NUMERO_HOSTS];
+        List<Host> listaHosts = new ArrayList<Host>();
 
-        List<Host> hosts = new ArrayList<Host>();
-        hosts.add(new Host(
-                hosts.size(),
-                new RamProvisionerSimple(8000),
-                new BwProvisionerSimple(1000),
-                1000000,
-                processorElements,
-                new VmSchedulerTimeShared(processorElements)
-        ));
-        hosts.add(new Host(
-                hosts.size(),
-                new RamProvisionerSimple(16000),
-                new BwProvisionerSimple(1000),
-                2000000,
-                processorElements,
-                new VmSchedulerTimeShared(processorElements)
-        ));
+        for (int i = 0; i < NUMERO_HOSTS; i++) {
+            listaCPUs[i] = new ArrayList<Pe>();
+            listaCPUs[i].add(new Pe(0, new PeProvisionerSimple(mips)));
+            if (i == 1) { // El host con id=1 contará con 4 procesadores
+                listaCPUs[i].add(new Pe(1, new PeProvisionerSimple(mips)));
+                listaCPUs[i].add(new Pe(2, new PeProvisionerSimple(mips)));
+                listaCPUs[i].add(new Pe(3, new PeProvisionerSimple(mips)));
+            }
+            host[i] = new Host(
+                i, new RamProvisionerSimple(ram),
+                new BwProvisionerSimple(anchoBanda), almacenamiento,
+                listaCPUs[i], new VmSchedulerTimeShared(listaCPUs[i]));
+            listaHosts.add(host[i]);
+        }
+        String arquitectura = "x86";
+        String so = "Linux";
+        String vmm = "Xen";
+        String nombre = "Datacenter_0";
+        double zonaHoraria = 3.0;
+        double costePorSeg = 0.007;
+        double costePorMem = 0.005;
+        double costePorAlm = 0.003;
+        double costePorBw = 0.002;
+        DatacenterCharacteristics caracteristicas  = new DatacenterCharacteristics(
+                arquitectura, so, vmm,
+                listaHosts, zonaHoraria, costePorSeg, costePorMem,
+                costePorAlm, costePorBw);
 
-        LinkedList<Storage> storageList = new LinkedList<Storage>();
-
-        DatacenterCharacteristics characteristics = new DatacenterCharacteristics(
-                "x86", "Linux", "Xen",
-                hosts, 1.0, 0.02, 0.01,
-                0.001, 0.001);
-
-        Datacenter datacenter = null;
+        Datacenter centroDeDatos = null;
         try {
-            datacenter = new Datacenter("datacenterEjemplo", characteristics,
-                    new VmAllocationPolicySimple(hosts),
-                    storageList, 0);
+            centroDeDatos = new Datacenter(nombre, caracteristicas,
+                    new VmAllocationPolicySimple(listaHosts),
+                    new LinkedList<Storage>(), 0);
         } catch (Exception e) {
             e.printStackTrace();
-            Log.printLine(">> ERROR creating datacenter");
+            //Log.printLine(">> ERROR creating datacenter");
         }
     }
 
@@ -120,42 +129,40 @@ public class Ejercicio4 {
             ex.printStackTrace();
             Log.printLine(">> ERROR creating broker");
         }
-
+    
         List<Vm> virtualMachines = new ArrayList<Vm>();
-        for (int idx = 0; idx < 4; idx++) {
-            virtualMachines.add(new Vm(virtualMachines.size(), broker.getId(),
-                    400, 1, 2000, 100,
-                    12000, "Xen", new CloudletSchedulerTimeShared()));
+        for (int idx = 0; idx < 6; idx++) {
+            Vm vm = new Vm(idx, broker.getId(), 400, 1, 2048, 40960, 1000, "Xen",
+                new CloudletSchedulerSpaceShared());
+    
+            virtualMachines.add(vm);
         }
-
+    
         broker.submitVmList(virtualMachines);
-
+    /* 
         List<Cloudlet> cloudlets = new ArrayList<Cloudlet>();
-
+    
         UtilizationModel utilizationModel = new UtilizationModelFull();
-
-        Cloudlet cloudlet1 =
-                new Cloudlet(cloudlets.size(), 20000,
-                        1,
-                        1000000, 1500000,
-                        utilizationModel,
-                        utilizationModel,
-                        utilizationModel);
-        cloudlet1.setUserId(broker.getId());
-        cloudlets.add(cloudlet1);
-
-        Cloudlet cloudlet2 =
-                new Cloudlet(cloudlets.size(), 30000,
-                        1,
-                        2000000, 2200000,
-                        utilizationModel,
-                        utilizationModel,
-                        utilizationModel);
-        cloudlet2.setUserId(broker.getId());
-        cloudlets.add(cloudlet2);
-
+    
+        for (int i = 0; i < 6; i++) {
+            Cloudlet cloudlet =
+                new Cloudlet(i, 20000, 1, 1000000, 1500000,
+                    utilizationModel, utilizationModel, utilizationModel);
+            cloudlet.setUserId(broker.getId());
+            cloudlets.add(cloudlet);
+        }
+    
         broker.submitCloudletList(cloudlets);
-
+    */
+        for (Vm vm : virtualMachines) {
+            Host host = vm.getHost();
+            if (host != null) {
+                Log.printLine("Máquina virtual #" + vm.getId() + " creada en el host #" + host.getId());
+            } else {
+                Log.printLine("Máquina virtual #" + vm.getId() + " no pudo ser creada en ningún host");
+            }
+        }
+    
         return broker;
     }
 

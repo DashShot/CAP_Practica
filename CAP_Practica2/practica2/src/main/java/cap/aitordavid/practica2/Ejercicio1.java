@@ -1,6 +1,5 @@
 package cap.aitordavid.practica2;
 
-
 import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
@@ -12,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
+
 
 
 public class Ejercicio1 {
@@ -32,10 +32,11 @@ public class Ejercicio1 {
 
     }
 
-    private void initCloudSim(){
+    private void initCloudSim() {
         Log.printLine(">> Initializing cloudsim...");
         int num_user = 1; // number of cloud users
-        Calendar calendar = Calendar.getInstance(); // Calendar whose fields have been initialized with the current date and time.
+        Calendar calendar = Calendar.getInstance(); // Calendar whose fields have been initialized with the current date
+                                                    // and time.
         boolean traceFlag = false; // trace events
         CloudSim.init(num_user, calendar, traceFlag);
         Log.printLine(">> Cloudsim ready!");
@@ -71,45 +72,50 @@ public class Ejercicio1 {
         }
     }
 
-    private void createDataCenter(){
-        List<Pe> processorElements = new ArrayList<Pe>();
-        processorElements.add(new Pe(0, new PeProvisionerSimple(2000)));
-        processorElements.add(new Pe(1, new PeProvisionerSimple(2000)));
+    private void createDataCenter() {
+        List<Pe> listaCPUs = new ArrayList<Pe>();
+        int mips = 500;
+        listaCPUs.add(new Pe(0, new PeProvisionerSimple(mips)));
+        listaCPUs.add(new Pe(1, new PeProvisionerSimple(mips)));
+        int hostId = 0;
+        int ram = 4096;
+        long almacenamiento = 20000;
+        long anchoBanda = 1000;
 
-        List<Host> hosts = new ArrayList<Host>();
-        hosts.add(new Host(
-                hosts.size(),
-                new RamProvisionerSimple(8000),
-                new BwProvisionerSimple(1000),
-                1000000,
-                processorElements,
-                new VmSchedulerTimeShared(processorElements)
-        ));
-        hosts.add(new Host(
-                hosts.size(),
-                new RamProvisionerSimple(16000),
-                new BwProvisionerSimple(1000),
-                2000000,
-                processorElements,
-                new VmSchedulerTimeShared(processorElements)
-        ));
+        Host host = new Host(hostId, 
+                        new RamProvisionerSimple(ram), //asignar y gestionar la memoria RAM
+                        new BwProvisionerSimple(anchoBanda), //asignar y gestionar el ancho de banda de red
+                        almacenamiento, // Especifica la capacidad de almacenamiento total del host
+                        listaCPUs,  //Es una lista que contiene las instancias de la clase Pe (Processing Element), que representan los procesadores físicos del host
+                        new VmSchedulerSpaceShared(listaCPUs)); //programar y gestionar la ejecución de las máquinas virtuales en el host
+                            //VmSchedulerTimeShared
 
-        LinkedList<Storage> storageList = new LinkedList<Storage>();
+        List<Host> listaHosts = new ArrayList<Host>();
+        listaHosts.add(host);
 
-        DatacenterCharacteristics characteristics = new DatacenterCharacteristics(
-                "x86", "Linux", "Xen",
-                hosts, 1.0, 0.02, 0.01,
-                0.001, 0.001);
+        String arquitectura = "x86";
+        String so = "Linux";
+        String vmm = "Xen";
+        String nombre = "Datacenter_0";
+        double zonaHoraria = 4.0;
+        double costePorSeg = 0.01;
+        double costePorMem = 0.01;
+        double costePorAlm = 0.003;
+        double costePorBw = 0.005;
 
-        Datacenter datacenter = null;
+        DatacenterCharacteristics caracteristicas = new DatacenterCharacteristics(arquitectura,
+                so, vmm, listaHosts, zonaHoraria, costePorSeg,
+                costePorMem, costePorAlm, costePorBw);
+
+        Datacenter centroDeDatos = null;
         try {
-            datacenter = new Datacenter("datacenterEjemplo", characteristics,
-                    new VmAllocationPolicySimple(hosts),
-                    storageList, 0);
+            centroDeDatos = new Datacenter(nombre, caracteristicas,
+                    new VmAllocationPolicySimple(listaHosts),
+                    new LinkedList<Storage>(), 0);
         } catch (Exception e) {
             e.printStackTrace();
-            Log.printLine(">> ERROR creating datacenter");
         }
+
     }
 
     private DatacenterBroker createResources() {
@@ -124,8 +130,13 @@ public class Ejercicio1 {
         List<Vm> virtualMachines = new ArrayList<Vm>();
         for (int idx = 0; idx < 4; idx++) {
             virtualMachines.add(new Vm(virtualMachines.size(), broker.getId(),
-                    400, 1, 2000, 100,
-                    12000, "Xen", new CloudletSchedulerTimeShared()));
+                    250,    //MPIS = 250
+                    1,      //Nº de procesadores
+                    1024,   //Cantidad de RAM en MB
+                    100,    //Cantidad de BW en Mbps
+                    4096,   // Espacio de almacenamiento en MB (4 GB = 4096 MB)
+                    "Xen",  //Tipo de hipervisor utilizado para virtualizar la máquina virtual.
+                    new CloudletSchedulerTimeShared())); //Tipo de planificador de tareas
         }
 
         broker.submitVmList(virtualMachines);
@@ -134,23 +145,21 @@ public class Ejercicio1 {
 
         UtilizationModel utilizationModel = new UtilizationModelFull();
 
-        Cloudlet cloudlet1 =
-                new Cloudlet(cloudlets.size(), 20000,
-                        1,
-                        1000000, 1500000,
-                        utilizationModel,
-                        utilizationModel,
-                        utilizationModel);
+        Cloudlet cloudlet1 = new Cloudlet(cloudlets.size(), 20000,
+                1,
+                1000000, 1500000,
+                utilizationModel,
+                utilizationModel,
+                utilizationModel);
         cloudlet1.setUserId(broker.getId());
         cloudlets.add(cloudlet1);
 
-        Cloudlet cloudlet2 =
-                new Cloudlet(cloudlets.size(), 30000,
-                        1,
-                        2000000, 2200000,
-                        utilizationModel,
-                        utilizationModel,
-                        utilizationModel);
+        Cloudlet cloudlet2 = new Cloudlet(cloudlets.size(), 30000,
+                1,
+                2000000, 2200000,
+                utilizationModel,
+                utilizationModel,
+                utilizationModel);
         cloudlet2.setUserId(broker.getId());
         cloudlets.add(cloudlet2);
 
@@ -159,7 +168,7 @@ public class Ejercicio1 {
         return broker;
     }
 
-    private void simulate(){
+    private void simulate() {
         Log.printLine(">> Iniciando simulación...");
         CloudSim.startSimulation();
         Log.printLine(">> Simulación en curso...");
