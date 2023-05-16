@@ -1,6 +1,5 @@
 package cap.aitordavid.practica2;
 
-
 import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
@@ -13,29 +12,31 @@ import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 
+public class Ejercicio3 {
 
-public class Example {
+    public Ejercicio3() {
+    }
 
-    public Example(){}
-
-    public void run(){
+    public void run() {
 
         this.initCloudSim();
 
         this.createDataCenter();
 
-        DatacenterBroker broker = this.createResources();
+        List<DatacenterBroker> brokers = this.createResources();
 
         this.simulate();
-
-        this.printCloudletsResults(broker);
-
+        
+        for(int idx = 0 ; idx < brokers.size(); idx++){            
+        this.printCloudletsResults(brokers.get(idx));
+        }
     }
 
-    private void initCloudSim(){
+    private void initCloudSim() {
         Log.printLine(">> Initializing cloudsim...");
-        int num_user = 1; // number of cloud users
-        Calendar calendar = Calendar.getInstance(); // Calendar whose fields have been initialized with the current date and time.
+        int num_user = 10; // number of cloud users
+        Calendar calendar = Calendar.getInstance(); // Calendar whose fields have been initialized with the current date
+                                                    // and time.
         boolean traceFlag = false; // trace events
         CloudSim.init(num_user, calendar, traceFlag);
         Log.printLine(">> Cloudsim ready!");
@@ -71,100 +72,117 @@ public class Example {
         }
     }
 
-    private void createDataCenter(){
-        List<Pe> processorElements = new ArrayList<Pe>();
-        processorElements.add(new Pe(0, new PeProvisionerSimple(2000)));
-        processorElements.add(new Pe(1, new PeProvisionerSimple(2000)));
+    private void createDataCenter() {
+        List<Pe> listaCPUs = new ArrayList<Pe>();
+        int mips = 1200;
+        listaCPUs.add(new Pe(0, new PeProvisionerSimple(mips)));
+        listaCPUs.add(new Pe(1, new PeProvisionerSimple(mips)));
+        listaCPUs.add(new Pe(2, new PeProvisionerSimple(mips)));
+        listaCPUs.add(new Pe(3, new PeProvisionerSimple(mips)));
 
-        List<Host> hosts = new ArrayList<Host>();
-        hosts.add(new Host(
-                hosts.size(),
-                new RamProvisionerSimple(8000),
-                new BwProvisionerSimple(1000),
-                1000000,
-                processorElements,
-                new VmSchedulerTimeShared(processorElements)
-        ));
-        hosts.add(new Host(
-                hosts.size(),
-                new RamProvisionerSimple(16000),
-                new BwProvisionerSimple(1000),
-                2000000,
-                processorElements,
-                new VmSchedulerTimeShared(processorElements)
-        ));
+        int ram = 24576; // 24 GB
+        long almacenamiento = 2000000; // 2 TB
+        long anchoBanda = 10000; // 10 Gbps
 
-        LinkedList<Storage> storageList = new LinkedList<Storage>();
+        final int NUMERO_HOSTS = 5; // Queremos 5 hosts
+        Host[] host = new Host[NUMERO_HOSTS];
+        List<Host> listaHosts = new ArrayList<Host>();
+        for (int i = 0; i < NUMERO_HOSTS; i++) {
+            host[i] = new Host(
+                    i, new RamProvisionerSimple(ram),
+                    new BwProvisionerSimple(anchoBanda), almacenamiento,
+                    listaCPUs, new VmSchedulerSpaceShared(listaCPUs));
+            listaHosts.add(host[i]);
+        }
 
-        DatacenterCharacteristics characteristics = new DatacenterCharacteristics(
-                "x86", "Linux", "Xen",
-                hosts, 1.0, 0.02, 0.01,
-                0.001, 0.001);
+        String arquitectura = "x86";
+        String so = "Linux";
+        String vmm = "Xen";
+        String nombre = "Datacenter_0";
+        double zonaHoraria = 2.0;
+        double costePorSeg = 0.01;
+        double costePorMem = 0.005;
+        double costePorAlm = 0.003;
+        double costePorBw = 0.005;
 
-        Datacenter datacenter = null;
+        DatacenterCharacteristics caracteristicas = new DatacenterCharacteristics(arquitectura, so, vmm,
+                listaHosts, zonaHoraria, costePorSeg,
+                costePorMem, costePorAlm, costePorBw);
+        Datacenter centroDeDatos = null;
         try {
-            datacenter = new Datacenter("datacenterEjemplo", characteristics,
-                    new VmAllocationPolicySimple(hosts),
-                    storageList, 0);
+            centroDeDatos = new Datacenter(nombre, caracteristicas,
+                    new VmAllocationPolicySimple(listaHosts),
+                    new LinkedList<Storage>(), 0);
         } catch (Exception e) {
             e.printStackTrace();
-            Log.printLine(">> ERROR creating datacenter");
         }
+
     }
 
-    private DatacenterBroker createResources() {
-        DatacenterBroker broker = null;
-        try {
-            broker = new DatacenterBroker("broker");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            Log.printLine(">> ERROR creating broker");
+    private List<DatacenterBroker> createResources() {
+        List<DatacenterBroker> brokers = new ArrayList<>();
+
+        for (int userId = 0; userId < 10; userId++) {
+            DatacenterBroker broker = null;
+            try {
+                broker = new DatacenterBroker("broker");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                Log.printLine(">> ERROR creating broker");
+            }
+            
+
+            List<Vm> virtualMachines = new ArrayList<Vm>();
+            for (int idx = 0; idx < 3; idx++) {
+                virtualMachines.add(new Vm(
+                        virtualMachines.size(), // ID de la máquina virtual
+                        broker.getId(), // ID del broker
+                        600, // MIPS (millones de instrucciones por segundo)
+                        2, // Número de procesadores requeridos
+                        4096, // Cantidad de RAM en MB
+                        1000, // Cantidad de BW (ancho de banda) en Mbps
+                        20480, // Espacio de almacenamiento en MB (20 GB = 20480 MB)
+                        "Xen", // Tipo de hipervisor utilizado para virtualizar la máquina virtual
+                        new CloudletSchedulerSpaceShared() // Tipo de planificador de tareas
+                ));
+            }
+
+            broker.submitVmList(virtualMachines);
+
+            List<Cloudlet> cloudlets = new ArrayList<Cloudlet>();
+
+            UtilizationModel utilizationModel = new UtilizationModelFull();
+
+            for (int idx1 = 0; idx1 < 15; idx1++) {
+                Cloudlet cloudlet = new Cloudlet(
+                        cloudlets.size(), // ID del cloudlet
+                        45000, // Longitud de instrucción
+                        1, // Número de núcleos requeridos
+                        1000000, // Tamaño de datos de entrada (B)
+                        1500000, // Tamaño de datos de salida (B)
+                        utilizationModel, // Modelo de utilización de CPU
+                        utilizationModel, // Modelo de utilización de RAM
+                        utilizationModel // Modelo de utilización de ancho de banda
+                );
+                cloudlet.setUserId(broker.getId());
+                cloudlets.add(cloudlet);
+            }
+
+            broker.submitCloudletList(cloudlets);
+            brokers.add(broker);
         }
-
-        List<Vm> virtualMachines = new ArrayList<Vm>();
-        for (int idx = 0; idx < 4; idx++) {
-            virtualMachines.add(new Vm(virtualMachines.size(), broker.getId(),
-                    400, 1, 2000, 100,
-                    12000, "Xen", new CloudletSchedulerTimeShared()));
-        }
-
-        broker.submitVmList(virtualMachines);
-
-        List<Cloudlet> cloudlets = new ArrayList<Cloudlet>();
-
-        UtilizationModel utilizationModel = new UtilizationModelFull();
-
-        Cloudlet cloudlet1 =
-                new Cloudlet(cloudlets.size(), 20000,
-                        1,
-                        1000000, 1500000,
-                        utilizationModel,
-                        utilizationModel,
-                        utilizationModel);
-        cloudlet1.setUserId(broker.getId());
-        cloudlets.add(cloudlet1);
-
-        Cloudlet cloudlet2 =
-                new Cloudlet(cloudlets.size(), 30000,
-                        1,
-                        2000000, 2200000,
-                        utilizationModel,
-                        utilizationModel,
-                        utilizationModel);
-        cloudlet2.setUserId(broker.getId());
-        cloudlets.add(cloudlet2);
-
-        broker.submitCloudletList(cloudlets);
-
-        return broker;
+        return brokers;
     }
 
-    private void simulate(){
+    private void simulate() {
+            
         Log.printLine(">> Iniciando simulación...");
         CloudSim.startSimulation();
         Log.printLine(">> Simulación en curso...");
         CloudSim.stopSimulation();
         Log.printLine(">> Simulación finalizada.");
+    
+        
     }
 
     private void printCloudletsResults(DatacenterBroker broker) {

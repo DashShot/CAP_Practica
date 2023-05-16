@@ -1,7 +1,6 @@
 //Autores: Aitor García Camargo y David Rogrídguez González 
 
 #include <iostream>
-
 #include <math.h>
 #include <string.h>
 #include <time.h>
@@ -183,7 +182,6 @@ int* decipher(int* rawData, int line[], int key)
 
 void enigma(int rank, int size)
 {
-	
 
 	if (rank == 0){ //El maestro imprime la matriz cifrada entera
 		printf("ESTO ES LA ENTRADA: \n");
@@ -194,8 +192,7 @@ void enigma(int rank, int size)
 	printf("DESCIFRANDO...: \n");
 	}
 	
-	
-	
+
 	int deciphered[nLines][nCharsPerLine];
 	
 	//Separar el bucle principal en lineas en función del numero de procesos
@@ -294,11 +291,10 @@ int main(int argc, char* argv[])
 					CASO 1 -> 0.076000
 					CASO 2 -> 0.893000
 					CASO 3 -> 2.847000
-					CASO 4 -> 
+
 		- Optimizaciones de Scatter y Gatter (separando el código en lineas) (mpiexec -n 4): 
 					CASO 1 -> 0.000976
 					CASO 2 -> 0.336056
 					CASO 3 -> 0.914018
-					CASO 4 ->
 
 */
