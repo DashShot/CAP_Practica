@@ -39,7 +39,7 @@ public class VmAllocationPolicyRandom extends VmAllocationPolicySimple {
                     getVmTable().put(vm.getUid(), host);
                     getUsedPes().put(vm.getUid(), requiredPes);
                     getFreePes().set(idx, getFreePes().get(idx) - requiredPes);
-                    Log.printLine("Máquina virtual #" + vm.getId() + " creada en el host #" + host.getId());
+                    Log.printLine("Maquina virtual #" + vm.getId() + " creada en el host #" + host.getId());
                     result = true;
                     break;
                 } else {
@@ -48,9 +48,11 @@ public class VmAllocationPolicyRandom extends VmAllocationPolicySimple {
                 tries++;
             } while (!result && tries < getFreePes().size());
         }
+        /* 
         if (!result) {
-            Log.printLine("Máquina virtual #" + vm.getId() + " no pudo ser creada en ningún host");
+            Log.printLine("Maquina virtual #" + vm.getId() + " no pudo ser creada en ningún host");
         }
+        */
         return result;
     }
 }
