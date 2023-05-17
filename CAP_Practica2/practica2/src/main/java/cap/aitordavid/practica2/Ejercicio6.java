@@ -13,6 +13,8 @@ import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.print.DocFlavor.READER;
+
 
 public class Ejercicio6 {
 
@@ -24,11 +26,13 @@ public class Ejercicio6 {
 
         this.createDataCenter();
 
-        DatacenterBroker broker = this.createResources();
+        List<DatacenterBroker> brokers = this.createResources();
 
         this.simulate();
-
-        this.printCloudletsResults(broker);
+        
+        for(int idx = 0 ; idx < brokers.size(); idx++){            
+        this.printCloudletsResults(brokers.get(idx));
+        }
 
     }
 
@@ -69,94 +73,137 @@ public class Ejercicio6 {
                         + dft.format(cloudlet.getFinishTime()));
             }
         }
+        
     }
 
     private void createDataCenter(){
-        List<Pe> processorElements = new ArrayList<Pe>();
-        processorElements.add(new Pe(0, new PeProvisionerSimple(2000)));
-        processorElements.add(new Pe(1, new PeProvisionerSimple(2000)));
 
-        List<Host> hosts = new ArrayList<Host>();
-        hosts.add(new Host(
-                hosts.size(),
-                new RamProvisionerSimple(8000),
-                new BwProvisionerSimple(1000),
-                1000000,
-                processorElements,
-                new VmSchedulerTimeShared(processorElements)
-        ));
-        hosts.add(new Host(
-                hosts.size(),
-                new RamProvisionerSimple(16000),
-                new BwProvisionerSimple(1000),
-                2000000,
-                processorElements,
-                new VmSchedulerTimeShared(processorElements)
-        ));
+        final int NUMERO_HOSTS = 20; // Queremos 20 hosts
 
-        LinkedList<Storage> storageList = new LinkedList<Storage>();
+       
+        List<Host> listaHosts = new ArrayList<Host>();
+        List<Pe>[] listaCPUs = new List[NUMERO_HOSTS];
+        Host[] host = new Host[NUMERO_HOSTS];
 
-        DatacenterCharacteristics characteristics = new DatacenterCharacteristics(
-                "x86", "Linux", "Xen",
-                hosts, 1.0, 0.02, 0.01,
-                0.001, 0.001);
+        for (int i = 0; i < 20; i++) { //HOST 
+            listaCPUs[i] = new ArrayList<Pe>();
+            if (i < 16) { // Host de tipo 1
+                listaCPUs[i].add(new Pe(1, new PeProvisionerSimple(2000)));
+                listaCPUs[i].add(new Pe(2, new PeProvisionerSimple(2000)));
+                host[i] = new Host(i,
+                            new RamProvisionerSimple(8192),              //asignación de memoria RAM
+                            new BwProvisionerSimple(10000),        // Asignación de BW
+                            1000000,                             // Asignación de almacenamiento
+                            listaCPUs[i],                               // Asignación de CPUS
+                            new VmSchedulerSpaceShared(listaCPUs[i]));   //Asignación de política
+                            listaHosts.add(host[i]);
+            }else{ // Host de tipo 2
+                listaCPUs[i].add(new Pe(1, new PeProvisionerSimple(2400)));
+                listaCPUs[i].add(new Pe(1, new PeProvisionerSimple(2400)));
+                listaCPUs[i].add(new Pe(1, new PeProvisionerSimple(2400)));
+                listaCPUs[i].add(new Pe(1, new PeProvisionerSimple(2400)));
+                host[i] = new Host(i,
+                            new RamProvisionerSimple(24576),              //asignación de memoria RAM
+                            new BwProvisionerSimple(10000),        // Asignación de BW
+                            2000000,                             // Asignación de almacenamiento
+                            listaCPUs[i],                               // Asignación de CPUS
+                            new VmSchedulerSpaceShared(listaCPUs[i]));   //Asignación de política
+                            listaHosts.add(host[i]);
+            }
+            
+        }
+        
 
-        Datacenter datacenter = null;
+        String arquitectura = "x86";
+        String so = "Linux";
+        String vmm = "Xen";
+        String nombre = "Datacenter_0";
+        double zonaHoraria = 1.0; //Horario estándar (UTC+1): 1.0
+        double costePorSeg = 0.01;
+        double costePorMem = 0.01;
+        double costePorAlm = 0.01;
+        double costePorBw = 0.01;
+
+        DatacenterCharacteristics caracteristicas  = new DatacenterCharacteristics(
+                arquitectura, so, vmm,
+                listaHosts, zonaHoraria, costePorSeg, costePorMem,
+                costePorAlm, costePorBw);
+
+        Datacenter centroDeDatos = null;
         try {
-            datacenter = new Datacenter("datacenterEjemplo", characteristics,
-                    new VmAllocationPolicySimple(hosts),
-                    storageList, 0);
+            centroDeDatos = new Datacenter(nombre, caracteristicas,
+                    new VmAllocationPolicySimple(listaHosts),
+                    new LinkedList<Storage>(), 0);
         } catch (Exception e) {
             e.printStackTrace();
-            Log.printLine(">> ERROR creating datacenter");
         }
     }
 
-    private DatacenterBroker createResources() {
-        DatacenterBroker broker = null;
-        try {
-            broker = new DatacenterBroker("broker");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            Log.printLine(">> ERROR creating broker");
-        }
+    private List<DatacenterBroker> createResources() {
+        List<DatacenterBroker> brokers = new ArrayList<>();
 
-        List<Vm> virtualMachines = new ArrayList<Vm>();
-        for (int idx = 0; idx < 4; idx++) {
-            virtualMachines.add(new Vm(virtualMachines.size(), broker.getId(),
-                    400, 1, 2000, 100,
-                    12000, "Xen", new CloudletSchedulerTimeShared()));
-        }
+        for (int userId = 0; userId < 3; userId++) {
+            DatacenterBroker broker = null;
+            try {
+                broker = new DatacenterBroker("broker");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                Log.printLine(">> ERROR creating broker");
+            }
+    
+            List<Vm> virtualMachines = new ArrayList<Vm>();
 
-        broker.submitVmList(virtualMachines);
+            if (userId == 0){ //Usuario 1
+                
+                for (int idx = 0; idx < 8; idx++) {
+                    virtualMachines.add(new Vm( // TIPO A
+                                virtualMachines.size(), // ID de la máquina virtual
+                                broker.getId(), // ID del broker
+                                2400, // MIPS (millones de instrucciones por segundo)
+                                1, // Número de procesadores requeridos
+                                3072, // Cantidad de RAM en MB
+                                1000, // Cantidad de BW (ancho de banda) en Mbps
+                                122880, // Espacio de almacenamiento en MB 
+                                "Xen", // Tipo de hipervisor utilizado para virtualizar la máquina virtual
+                                new CloudletSchedulerSpaceShared() // Tipo de planificador de tareas
+                        ));
+                }
+            }else if (userId == 1){ // Usuario 2
+                for (int idx = 0; idx < 16; idx++) {
+                    virtualMachines.add(new Vm( // TIPO B
+                                virtualMachines.size(), // ID de la máquina virtual
+                                broker.getId(), // ID del broker
+                                2000, // MIPS (millones de instrucciones por segundo)
+                                1, // Número de procesadores requeridos
+                                2048, // Cantidad de RAM en MB
+                                1000, // Cantidad de BW (ancho de banda) en Mbps
+                                81920, // Espacio de almacenamiento en MB 
+                                "Xen", // Tipo de hipervisor utilizado para virtualizar la máquina virtual
+                                new CloudletSchedulerSpaceShared() // Tipo de planificador de tareas
+                        ));
+                }
+            }else{
+                for (int idx = 0; idx < 24; idx++) {
+                    virtualMachines.add(new Vm( // TIPO C
+                                virtualMachines.size(), // ID de la máquina virtual
+                                broker.getId(), // ID del broker
+                                1800, // MIPS (millones de instrucciones por segundo)
+                                1, // Número de procesadores requeridos
+                                1024, // Cantidad de RAM en MB
+                                1000, // Cantidad de BW (ancho de banda) en Mbps
+                                61440, // Espacio de almacenamiento en MB 
+                                "Xen", // Tipo de hipervisor utilizado para virtualizar la máquina virtual
+                                new CloudletSchedulerSpaceShared() // Tipo de planificador de tareas
+                        ));
 
-        List<Cloudlet> cloudlets = new ArrayList<Cloudlet>();
-
-        UtilizationModel utilizationModel = new UtilizationModelFull();
-
-        Cloudlet cloudlet1 =
-                new Cloudlet(cloudlets.size(), 20000,
-                        1,
-                        1000000, 1500000,
-                        utilizationModel,
-                        utilizationModel,
-                        utilizationModel);
-        cloudlet1.setUserId(broker.getId());
-        cloudlets.add(cloudlet1);
-
-        Cloudlet cloudlet2 =
-                new Cloudlet(cloudlets.size(), 30000,
-                        1,
-                        2000000, 2200000,
-                        utilizationModel,
-                        utilizationModel,
-                        utilizationModel);
-        cloudlet2.setUserId(broker.getId());
-        cloudlets.add(cloudlet2);
-
-        broker.submitCloudletList(cloudlets);
-
-        return broker;
+                }
+                
+            }
+            broker.submitVmList(virtualMachines);
+            brokers.add(userId, broker);  
+            }
+               
+        return brokers;
     }
 
     private void simulate(){
@@ -168,6 +215,6 @@ public class Ejercicio6 {
     }
 
     private void printCloudletsResults(DatacenterBroker broker) {
-        this.printCloudletList(broker.getCloudletReceivedList());
+       // this.printCloudletList(broker.getCloudletReceivedList());
     }
 }
