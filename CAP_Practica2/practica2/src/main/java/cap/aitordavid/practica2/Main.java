@@ -11,6 +11,7 @@ public class Main {
         //ejercicio3();
         //ejercicio4();
         ejercicio5();
+        //ejercicio6();
     }
 
    
@@ -40,6 +41,10 @@ public class Main {
     }
     private static void ejercicio5() {
         Ejercicio5 example = new Ejercicio5();
+        example.run();
+    }
+    private static void ejercicio6() {
+        Ejercicio6 example = new Ejercicio6();
         example.run();
     }
 }
