@@ -8,7 +8,6 @@ import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.VmAllocationPolicySimple;
 
-import java.util.Random;
 
 public class VmAllocationPolicyRandom extends VmAllocationPolicySimple {
     public VmAllocationPolicyRandom(List<? extends Host> list) {
@@ -27,12 +26,12 @@ public class VmAllocationPolicyRandom extends VmAllocationPolicySimple {
         if (!getVmTable().containsKey(vm.getUid())) { // if this vm was not created
             do { // we still trying until we find a host or until we try all of them
                 
-                // Queremos un Host aleatorio 
-                int idx = (int)(Math.random()*(getVmTable().size()));
-                
+                // Seleccionamos un un Host aleatorio 
+                int idx = (int)(Math.random()*(getHostList().size()));                
                 Host host = getHostList().get(idx);
 
                 Log.printLine("Intentamos Crear la VM: "+vm.getId()+"  Con el Host: "+ host.getId());
+
                 result = host.vmCreate(vm);
                 if (result) { // if vm was successfully created in the host
                     getVmTable().put(vm.getUid(), host);
